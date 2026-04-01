@@ -1,17 +1,41 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, Copy, Check } from "lucide-react";
+import { Loader2, Copy, Check, Zap } from "lucide-react";
+
+const FREE_LIMIT = 5; 
 
 export default function AudioUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [transcription, setTranscription] = useState<string>(""); // Состояние для текста
+  const [transcription, setTranscription] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [usageCount, setUsageCount] = useState<number>(0);
+  const [isPro, setIsPro] = useState<boolean>(false);
+  const [fetchingUser, setFetchingUser] = useState(true);
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const res = await fetch("/api/user");
+      if (res.ok) {
+        const data = await res.json();
+        setUsageCount(data.usageCount);
+        setIsPro(data.isPro);
+      }
+    } catch (error) {
+      console.error("Failed to load user data", error);
+    } finally {
+      setFetchingUser(false);
+    }
+  };
 
   const handleUpload = async () => {
     if (!file) {
@@ -34,7 +58,7 @@ export default function AudioUploader() {
       let data;
       try {
         data = JSON.parse(textResponse);
-      } catch (e) {
+      } catch {
         throw new Error("Server error: check console");
       }
 
@@ -42,6 +66,11 @@ export default function AudioUploader() {
 
       setTranscription(data.text);
       toast.success("Done! Text obtained.");
+      setUsageCount((prev) => prev + 1);
+
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+
     } catch (error: unknown) {
       toast.error((error as Error).message);
     } finally {
@@ -56,6 +85,8 @@ export default function AudioUploader() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const isLimitReached = !isPro && usageCount >= FREE_LIMIT;
+
   return (
     <Card className="w-full max-w-md shadow-sm border-gray-200">
       <CardHeader className="text-center pb-4">
@@ -64,20 +95,42 @@ export default function AudioUploader() {
       </CardHeader>
       
       <CardContent className="space-y-6">
+
+        {!fetchingUser && (
+          <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                {isPro ? "Pro Plan" : "Free Plan"}
+              </span>
+              <span className="text-sm font-medium text-gray-800 mt-0.5">
+                {isPro ? "Unlimited uses" : `${usageCount} of ${FREE_LIMIT} uses`}
+              </span>
+            </div>
+            {!isPro && (
+              <Button variant="outline" size="sm" className="h-8 text-xs font-medium text-blue-600 border-blue-200 hover:bg-blue-50">
+                <Zap className="w-3 h-3 mr-1 fill-current" />
+                Upgrade
+              </Button>
+            )}
+          </div>
+        )}
+
         <input 
           type="file" 
           accept="audio/*" 
           className="hidden" 
           ref={fileInputRef}
           onChange={(e) => setFile(e.target.files?.[0] || null)} 
+          disabled={isLimitReached}
         />
 
-        <div className="flex items-center gap-3 border rounded-md p-2 bg-gray-50/50">
+        <div className={`flex items-center gap-3 border rounded-md p-2 transition-colors ${isLimitReached ? 'bg-gray-100 opacity-60' : 'bg-gray-50/50'}`}>
           <Button 
             type="button" 
             variant="secondary" 
             className="shrink-0"
             onClick={() => fileInputRef.current?.click()}
+            disabled={isLimitReached}
           >
             Choose File
           </Button>
@@ -87,15 +140,17 @@ export default function AudioUploader() {
         </div>
 
         <Button 
-          className="w-full h-11" 
+          className="w-full h-11 relative overflow-hidden" 
           onClick={handleUpload} 
-          disabled={loading || !file}
+          disabled={loading || !file || isLimitReached}
         >
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Processing...
             </>
+          ) : isLimitReached ? (
+            "Limit Reached"
           ) : (
             "Convert to Text"
           )}

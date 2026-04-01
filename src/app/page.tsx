@@ -1,5 +1,6 @@
 import { SignInButton, Show, UserButton } from '@clerk/nextjs';
 import AudioUploader from '@/components/AudioUploader';
+import HistoryList from '@/components/HistoryList';
 
 export default function Home() {
   return (
@@ -20,8 +21,10 @@ export default function Home() {
             <UserButton />
             <p className="text-lg font-medium text-gray-700">You are successfully signed in!</p>
           </div>
-          
+
           <AudioUploader />
+
+          <HistoryList />
         </div>
       </Show>
     </main>
