@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import prisma from "@/lib/db";
 import OpenAI from "openai";
+import prisma from "@/lib/db"; // ВОЗВРАЩАЕМ ИМПОРТ ПРИЗМЫ
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -10,53 +10,41 @@ const openai = new OpenAI({
 export async function POST(req: Request) {
   try {
     const { userId } = await auth();
-    if (!userId) return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-
-    let user = await prisma.user.findUnique({
-      where: { clerkId: userId },
-    });
-
-    if (!user) {
-      user = await prisma.user.upsert({
-        where: { clerkId: userId },
-        update: {},
-        create: { clerkId: userId, email: "" },
-      });
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (user.usageCount >= 1 && !user.isPro) {
-      return NextResponse.json(
-        { error: "Free trial expired. Please upgrade to a paid plan for more usage." },
-        { status: 403 }
-      );
-    }
+    // --- ТЕСТ БАЗЫ ДАННЫХ ---
+    console.log("Testing Prisma connection...");
+    const user = await prisma.user.findFirst(); 
+    console.log("Database connection test:", user ? "Success" : "No user found");
+    // ------------------------
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    if (!file) return NextResponse.json({ error: "File not found" }, { status: 400 });
 
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    console.log("File received, sending to OpenAI...");
+
+    // ОТПРАВЛЯЕМ НАПРЯМУЮ В OPENAI
     const transcription = await openai.audio.transcriptions.create({
       file: file,
       model: "whisper-1",
     });
 
-    await prisma.$transaction([
-      prisma.recording.create({
-        data: {
-          userId: user.id,
-          transcription: transcription.text,
-        },
-      }),
-      prisma.user.update({
-        where: { id: user.id },
-        data: { usageCount: { increment: 1 } },
-      }),
-    ]);
+    console.log("OpenAI Response:", transcription.text);
 
+    // Возвращаем текст
     return NextResponse.json({ text: transcription.text });
 
   } catch (error: unknown) {
-    console.error(error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("DEBUG ERROR:", error);
+    return NextResponse.json({ 
+      error: (error as Error).message || "Internal Server Error",
+      details: (error as Error).stack 
+    }, { status: 500 });
   }
 }
