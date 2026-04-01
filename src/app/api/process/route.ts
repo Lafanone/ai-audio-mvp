@@ -7,7 +7,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const FREE_LIMIT = 5; 
+const FREE_LIMIT = 5;
 
 export async function POST(req: Request) {
   try {
@@ -22,11 +22,8 @@ export async function POST(req: Request) {
 
     if (!user) {
       user = await prisma.user.create({
-        data: {
-          clerkId: clerkId,
-        },
+        data: { clerkId: clerkId },
       });
-      console.log("New user created in DB:", user.id);
     }
 
     if (!user.isPro && user.usageCount >= FREE_LIMIT) {
@@ -49,11 +46,33 @@ export async function POST(req: Request) {
       model: "whisper-1",
     });
 
+    const transcriptText = transcription.text;
+    console.log("Audio transcribed!");
+
+    console.log("Analyzing text...");
+    const analysisResponse = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo", 
+      messages: [
+        { 
+          role: "system", 
+          content: "You are a smart AI assistant. Analyze the provided text. Write a short summary (1-2 sentences) and highlight 2-3 main points using bullet points. Respond in the same language as the text." 
+        },
+        { 
+          role: "user", 
+          content: transcriptText 
+        }
+      ],
+    });
+
+    const analysisText = analysisResponse.choices[0].message.content;
+    console.log("Analysis complete!");
+
     await prisma.$transaction([
       prisma.recording.create({
         data: {
-          userId: user.id, 
-          transcription: transcription.text,
+          userId: user.id,
+          transcription: transcriptText,
+          analysis: analysisText,
         },
       }),
       prisma.user.update({
@@ -62,9 +81,10 @@ export async function POST(req: Request) {
       }),
     ]);
 
-    console.log("Successfully saved and counted!");
-
-    return NextResponse.json({ text: transcription.text });
+    return NextResponse.json({ 
+      text: transcriptText, 
+      analysis: analysisText 
+    });
 
   } catch (error: unknown) {
     console.error("DEBUG ERROR:", error);

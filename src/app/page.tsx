@@ -1,8 +1,17 @@
+"use client"; 
+
+import { useState } from "react";
 import { SignInButton, Show, UserButton } from '@clerk/nextjs';
 import AudioUploader from '@/components/AudioUploader';
 import HistoryList from '@/components/HistoryList';
 
 export default function Home() {
+  const [historyKey, setHistoryKey] = useState(0);
+
+  const refreshHistory = () => {
+    setHistoryKey(prev => prev + 1);
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
       <h1 className="text-4xl font-bold mb-8">AI Audio MVP</h1>
@@ -22,9 +31,9 @@ export default function Home() {
             <p className="text-lg font-medium text-gray-700">You are successfully signed in!</p>
           </div>
 
-          <AudioUploader />
+          <AudioUploader onUploadSuccess={refreshHistory} />
 
-          <HistoryList />
+          <HistoryList key={historyKey} />
         </div>
       </Show>
     </main>
