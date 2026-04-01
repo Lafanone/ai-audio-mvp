@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+🎙️ AI Audio Studio MVP
+A modern, high-performance SaaS application that transcribes audio recordings and provides AI-powered summaries and insights. Built as a showcase of a full-stack AI-integrated architecture.
 
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+🚀 Features
+Auth & Security: Secure user authentication via Clerk.
+AI Transcription: High-accuracy audio-to-text conversion using OpenAI Whisper.
+AI Analysis: Automatic summaries and key insights extraction via GPT-3.5/4o-mini.
+Database & Persistence: Reliable data storage with Supabase (PostgreSQL) and Prisma 6.
+Business Logic: Usage limits (5 free credits) and credit tracking.
+Smart History: Expandable UI to manage and review past recordings and AI insights.
+Modern UI: Responsive design built with Tailwind CSS, Shadcn UI, and Impeccable styling principles (gradients & animations).
+🛠️ Tech Stack
+Framework: Next.js 15 (App Router)
+Language: TypeScript
+Styling: Tailwind CSS + Lucide Icons
+UI Components: Shadcn UI + Sonner (Toasts)
+Database ORM: Prisma 6
+Database Provider: Supabase (PostgreSQL)
+Authentication: Clerk
+AI Engine: OpenAI API (Whisper-1 & GPT Models)
+📦 Deployment & Setup
+Clone the repository
+Install dependencies: npm install
+Setup environment variables: Create a .env file with your Clerk, Supabase, and OpenAI keys.
+Database Migration: npx prisma db push
+Run the project: npm run dev
+Developed as part of a technical MVP sprint.
