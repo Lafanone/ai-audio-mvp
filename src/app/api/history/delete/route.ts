@@ -9,7 +9,7 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await req.json(); // Получаем ID записи для удаления
+    const { id } = await req.json(); 
 
     if (!id) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
